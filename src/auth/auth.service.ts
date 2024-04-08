@@ -6,6 +6,8 @@ import { UpdateAuthDto } from './dto/update-auth.dto';
 import { Model } from 'mongoose';
 import { User } from './entities/user.entity';
 
+import * as bcryptjs from 'bcryptjs';
+
 @Injectable()
 export class AuthService {
 
@@ -21,13 +23,19 @@ export class AuthService {
     //! Insertar de manera básica en nuestra BD
     
     try {
-      const newUser = new this.userModel( createUserDto );
-      //! 1. encriptar la contraseña
+      const { password, ...userData } = createUserDto;
+      //! 1. encriptar la contraseña descargamos este paquete para encriptar npm i bcryptjs y npm i --save-dev @types/bcryptjs para que funcione en ts
+      const newUser = new this.userModel({
+        password: bcryptjs.hashSync( password, 10 ),
+        ...userData
+      });
       //! 2. guardar el usuario
-      //! 3. Generar Json web token 'JWT'
-      return await newUser.save();
+      /* const newUser = new this.userModel( createUserDto );
+      return await newUser.save(); */
+      await newUser.save();
+      const { password:_, ...user } = newUser.toJSON();
+      return user;
     } catch (error) {
-      console.log(error.code);
       if( error.code === 11000 ) throw new BadRequestException(`${createUserDto.email} already exists!`)
       throw new InternalServerErrorException('Something terrible happen!!');
     }
