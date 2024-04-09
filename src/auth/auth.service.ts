@@ -104,6 +104,12 @@ export class AuthService {
   findOne(id: number) {
     return `This action returns a #${id} auth`;
   }
+  //! que me regrese el usuario by Id
+  async findUserById( userId: string ) {
+    const user = await this.userModel.findById( userId );
+    const { password, ...rest } = user.toJSON();
+    return rest;
+  }
 
   update(id: number, updateAuthDto: UpdateAuthDto) {
     return `This action updates a #${id} auth`;
@@ -112,4 +118,5 @@ export class AuthService {
   remove(id: number) {
     return `This action removes a #${id} auth`;
   }
+
 }
