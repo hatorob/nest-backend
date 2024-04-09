@@ -1,15 +1,17 @@
 import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { CreateUserDto, UpdateAuthDto, RegisterUserDto, LoginDto } from './dto';
+
+
 import { Model } from 'mongoose';
 import { User } from './entities/user.entity';
 
 import * as bcryptjs from 'bcryptjs';
-import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './interfaces/jwt-payload';
+import { LoginResponse } from './interfaces/login.-response';
+
 
 @Injectable()
 export class AuthService {
@@ -23,7 +25,7 @@ export class AuthService {
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    console.log(createUserDto);
+    //console.log(createUserDto);
     //! Insertar de manera básica en nuestra BD
     
     try {
@@ -46,22 +48,46 @@ export class AuthService {
 
   }
 
-  async login( loginDto: LoginDto ) {
-    console.log({loginDto});
+  //Promise<LoginResponse>
+  async register( registerUserDto: RegisterUserDto):Promise<LoginResponse> {
+      //console.log({registerUserDto});
+      //* Solución profe -- inicio
+      const user = await this.create( registerUserDto );
+      return {
+        user,
+        token: this.getJwt({id: user._id}),
+      }
+      //* Solución profe -- fin
+      //? Esta fue mi solución utilizando el login, pero el profe hizo lo que yo iba a hacer al principio
+      //! Creo el usuario
+      //! como quiero que después de crear usuario genere sesión se llama al login.
+      //! Por consiguiente obtengo el email y password de mi parametro para enviarlo al loggin
+      /* 
+      await this.create(registerUserDto);
+      const { email, password } = registerUserDto;
+      return await this.login({
+        email,
+        password
+      }); */
+  }
+
+  async login( loginDto: LoginDto ): Promise<LoginResponse> {
+    //console.log({loginDto});
     const { email, password } = loginDto;
     const user = await this.userModel.findOne({email});
     if( !user ) throw new UnauthorizedException('Not valid credentials - email');
     if( !bcryptjs.compareSync(password, user.password ) ) throw new UnauthorizedException('Not valid credentials - password'); 
     
     const { password:_, ...rest } = user.toJSON();
-    return {
-      user: rest,
-      token: this.getJwt({id: user.id}),
-    }
     /**
      * User { _id, name, email, roles }
      * token -> Json web token
      */
+    return {
+      user: rest,
+      token: this.getJwt({id: user.id}),
+    }
+    
   }
 
   //! JSON WEB TOKEN
@@ -69,6 +95,7 @@ export class AuthService {
     const token = this.jwtService.sign(payload);
     return token;
   }
+
 
   findAll() {
     return `This action returns all auth`;
