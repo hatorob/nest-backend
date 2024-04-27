@@ -76,6 +76,7 @@ export class AuthService {
     const { email, password } = loginDto;
     const user = await this.userModel.findOne({email});
     if( !user ) throw new UnauthorizedException('Not valid credentials - email');
+    console.log("entro aui...");
     if( !bcryptjs.compareSync(password, user.password ) ) throw new UnauthorizedException('Not valid credentials - password'); 
     
     const { password:_, ...rest } = user.toJSON();

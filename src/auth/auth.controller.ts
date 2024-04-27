@@ -27,9 +27,8 @@ export class AuthController {
     return this.authService.register( registerUserDto );
   }
 
-  @UseGuards( AuthGuard )
   @Get()
-  findAll( @Request() req: Request ) {
+  findAll() {
     //console.log(req);
     /* const user = req['user'];
     return user; */
